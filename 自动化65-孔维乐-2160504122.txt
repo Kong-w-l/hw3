@@ -1,0 +1,211 @@
+%任务一
+clear all
+clc
+im = {};
+map={};
+
+dis = dir('*.bmp');
+for i = 1:length(dis)
+    [im{i},map{i}] =imread(dis(i).name); %%将读取
+    figure(i);
+    subplot(1,2,1);
+    imshow(im{i},map{i}) ;
+    title(sprintf('%s的原图像',dis(i).name));
+    subplot(1,2,2);
+    gp=zeros(1,256);
+    ima=ind2gray(im{i},map{i});
+    [m,n]=size(ima);
+    for k=0:255
+        gp(k+1)=length(find(ima==k))/(m*n);
+    end
+    bar(0:255,gp);
+    axis([0;256;0;0.04]);
+    title(sprintf('%s的直方图',dis(i).name));
+end
+
+%任务二
+clear all
+clc
+im = {};
+map={};
+
+dis = dir('*.bmp');
+for i = 1:length(dis)
+    [im{i},map{i}] =imread(dis(i).name); %%将读取
+    figure(i);
+    subplot(2,2,1);
+    imshow(im{i},map{i}) ;
+    title(sprintf('%s的原图像',dis(i).name));
+    subplot(2,2,2);
+    gp=zeros(1,256);
+    ima=ind2gray(im{i},map{i});
+    [m,n]=size(ima);
+    for k=0:255
+        gp(k+1)=length(find(ima==k))/(m*n);
+    end
+    bar(0:255,gp);
+    axis([0;256;0;0.04]);
+    title(sprintf('%s的直方图',dis(i).name));
+    subplot(2,2,3);
+    new_im=histeq(im{i});
+    imshow(new_im,map{i});
+    title(sprintf('%s的直方图均衡',dis(i).name));
+    subplot(2,2,4);
+    gp1=zeros(1,256);
+    ima1=ind2gray(new_im,map{i});
+    [m,n]=size(ima1);
+    for k=0:255
+        gp1(k+1)=length(find(ima1==k))/(m*n);
+    end
+    bar(0:255,gp1);
+    axis([0;256;0;0.04]);
+    title(sprintf('%s均衡后的直方图',dis(i).name));
+end
+
+%任务三
+clear all
+clc
+im = {};
+map={};
+
+dis = dir('*.bmp');
+for i = 1:length(dis)
+    [im{i},map{i}] =imread(dis(i).name); %%将读取
+    figure(i);
+    subplot(3,2,1);
+    imshow(im{i},map{i}) ;
+    title(sprintf('%s的原图像',dis(i).name));     
+    
+    subplot(3,2,2);
+    gp=zeros(1,256);
+    ima=ind2gray(im{i},map{i});
+    [m,n]=size(ima);
+    for k=0:255
+        gp(k+1)=length(find(ima==k))/(m*n);
+    end
+    bar(0:255,gp);
+    axis([0;256;0;0.04]);
+    title(sprintf('%s的直方图',dis(i).name));
+    
+    if(i>=1&&i<=3)
+        [sam_im,map2]=imread(sprintf('%s',dis(1).name));
+    end
+    if(i>=4&&i<=7)
+        [sam_im,map2]=imread(sprintf('%s',dis(4).name));
+    end
+    if(i>=8&&i<=11)
+        [sam_im,map2]=imread(sprintf('%s',dis(8).name));
+    end
+    if(i>=12&&i<=14)
+        [sam_im,map2]=imread(sprintf('%s',dis(12).name));
+    end
+    subplot(3,2,3);
+    imshow(sam_im);
+    title(sprintf('%s的匹配用图',dis(i).name));
+
+    subplot(3,2,4);   
+    gp0=zeros(1,256);
+    ima0=ind2gray(sam_im,map2);
+    [m1,n1]=size(ima0);
+    for x=1:m1
+        for y=1:n1
+            num=ima0(x,y);
+            gp0(num+1)=gp0(num+1)+1;%记录每个灰度值的像素数
+        end
+    end
+    for j=1:256
+        gp0(j)=gp0(j)/(m1*n1);
+    end
+    bar(0:255,gp0);
+    axis([0;256;0;0.04]);
+    title(sprintf('%s匹配用图的直方图',dis(i).name));
+
+    new_im=histeq(ima,(gp0')*m1*n1);
+    subplot(3,2,5)
+    imshow(new_im,map2);
+    title(sprintf('%s匹配后的图像',dis(i).name));
+
+    subplot(3,2,6);
+    gp1=zeros(1,256);
+    ima1=ind2gray(new_im,map2);
+    [m2,n2]=size(ima1);
+    for z=0:255
+        gp1(z+1)=length(find(ima1==z))/(m2*n2);
+    end
+    bar(0:255,gp1);
+    axis([0;256;0;0.04]);
+    title(sprintf('%s匹配后的直方图',dis(i).name));
+end
+
+%任务四
+% Image:灰度图像
+% k0,k1：可调参数
+% Ibw：提取得到数字区域
+Image=imread('elain.bmp');
+k0=0.5;
+k1=0.1;
+E=1.5;
+masksize = 7; % 邻域范围，奇数
+exsize = floor(masksize/2); % 原图片需要填充的区域
+Im_ex = padarray(Image, [exsize exsize], 'replicate', 'both'); % 图片填充
+Im_s_dr = zeros(size(Image)); % 局部标准差
+for i = 1:size(Image, 1)
+    for j = 1:size(Image, 2)
+        subdomain = Im_ex(i:i+2*exsize, j:j+2*exsize);
+        localmean = sum(subdomain(:))/masksize^2;
+        Im_s_dr(i, j) = sqrt(sum((subdomain(:)-localmean).^2))/masksize;
+    end
+end
+% 确定不同区域的放大系数
+Im_mean = mean(Image(:));
+minIm = min(Image(:));
+Is_mean = mean(Im_s_dr(:));
+maxIs = max(Im_s_dr(:));
+Im1 = Image<(minIm+k0*(Im_mean-minIm)); % 均值阈值提取
+Is1 = Im_s_dr>(Is_mean + k1*(maxIs-Is_mean)); % 标准差阈值提取
+s = strel('disk',10); % 需要根据实际图片大小来调
+Is1 = imclose(Is1, s); % 标准差阈值提取闭运算
+Ibw = Im1 & Is1; % 局部增强
+subplot(1,3,1);
+imshow(Image);
+title('原始图像');
+subplot(1,3,2);
+imshow(Ibw);
+title('增强图像的放大图像');
+Ibw2=Ibw.*(E-1)+1;
+for i = 1:size(Image, 1)
+    for j = 1:size(Image, 2)
+        P(i,j)=Ibw2(i,j).*Image(i,j);
+    end
+end
+subplot(1,3,3);
+imshow(P);
+title('增强后的图像');
+
+%任务五
+%阈值分割法
+clear all
+clc
+[Im,map]=imread('elain.bmp');
+figure(1);
+subplot(1,3,1);
+imhist(Im,map);
+x=80;
+title('elain.bmp的直方图');
+[m,n]=size(Im);
+I=zeros(m,n);
+for i=1:m
+    for j=1:n
+        if Im(i,j)>x
+            I(i,j)=1;
+        else
+            I(i,j)=0;
+        end
+    end
+end
+subplot(1,3,2);
+imshow(Im);
+title('elain.bmp的原图像');
+subplot(1,3,3);
+imshow(I);
+title('elain.bmp的分割后图像');
